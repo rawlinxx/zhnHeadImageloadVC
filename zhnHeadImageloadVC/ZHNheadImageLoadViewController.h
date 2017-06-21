@@ -19,4 +19,9 @@ typedef void(^ZHNheadImageLoadBlock)(UIImage *);
  *  需要裁剪的图片
  */
 @property (nonatomic,strong) UIImage * oldImage;
+/**
+ *  裁剪框 宽高比
+ */
+@property (nonatomic,assign) CGFloat wid_hei_ratio;
+
 @end

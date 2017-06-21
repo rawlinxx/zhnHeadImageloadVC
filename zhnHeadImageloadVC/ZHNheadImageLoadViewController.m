@@ -83,10 +83,13 @@ static const CGFloat maxScale = 2;
     [self.view addSubview:maskView];
     CAShapeLayer * maskLayer = [[CAShapeLayer alloc]init];
     
+    if (_wid_hei_ratio == 0) { _wid_hei_ratio = 1; }
+    CGRect targetRect = CGRectMake(0, (viewHeight - viewWeidth / _wid_hei_ratio)/2, viewWeidth, viewWeidth / _wid_hei_ratio);
+    
     // 遮罩
     CGMutablePathRef path = CGPathCreateMutable();
-    CGPathAddRect(path, nil, CGRectMake(0, 0, viewWeidth, (viewHeight - viewWeidth)/2));
-    CGPathAddRect(path, nil, CGRectMake(0, (viewHeight + viewWeidth)/2, viewWeidth, (viewHeight - viewWeidth)/2));
+    CGPathAddRect(path, nil, CGRectMake(0, 0, viewWeidth, targetRect.origin.y));
+    CGPathAddRect(path, nil, CGRectMake(0, targetRect.origin.y + targetRect.size.height, viewWeidth, targetRect.origin.y));
     maskLayer.path = path;
     maskView.layer.mask = maskLayer;
     
@@ -97,7 +100,7 @@ static const CGFloat maxScale = 2;
     boardView.layer.borderWidth = 1;
     [self.view addSubview:boardView];
     self.boardView = boardView;
-    boardView.frame = CGRectMake(0, (viewHeight - viewWeidth)/2, viewWeidth, viewWeidth);
+    boardView.frame = targetRect;
 }
 
 - (void)P_initSubBttons{
