@@ -12,6 +12,7 @@
 @property (nonatomic,weak) UIImageView * chosedHeadImageView;
 @property (nonatomic,weak) UIView * boardView;
 @property (nonatomic,assign) CGRect headImageOldRect;
+@property (nonatomic,assign) CGRect targetRect;
 @end
 
 static  CGFloat viewWeidth;
@@ -50,7 +51,7 @@ static const CGFloat maxScale = 2;
     
     CGFloat weidthScale = chosedHeadImageView.image.size.width / viewWeidth;
     CGFloat heightScale = chosedHeadImageView.image.size.height / viewHeight;
-
+    
     
     // 长宽按照比例显示
     if (weidthScale > heightScale) {
@@ -84,12 +85,12 @@ static const CGFloat maxScale = 2;
     CAShapeLayer * maskLayer = [[CAShapeLayer alloc]init];
     
     if (_wid_hei_ratio == 0) { _wid_hei_ratio = 1; }
-    CGRect targetRect = CGRectMake(0, (viewHeight - viewWeidth / _wid_hei_ratio)/2, viewWeidth, viewWeidth / _wid_hei_ratio);
+    _targetRect = CGRectMake(0, (viewHeight - viewWeidth / _wid_hei_ratio)/2, viewWeidth, viewWeidth / _wid_hei_ratio);
     
     // 遮罩
     CGMutablePathRef path = CGPathCreateMutable();
-    CGPathAddRect(path, nil, CGRectMake(0, 0, viewWeidth, targetRect.origin.y));
-    CGPathAddRect(path, nil, CGRectMake(0, targetRect.origin.y + targetRect.size.height, viewWeidth, targetRect.origin.y));
+    CGPathAddRect(path, nil, CGRectMake(0, 0, viewWeidth, _targetRect.origin.y));
+    CGPathAddRect(path, nil, CGRectMake(0, _targetRect.origin.y + _targetRect.size.height, viewWeidth, _targetRect.origin.y));
     maskLayer.path = path;
     maskView.layer.mask = maskLayer;
     
@@ -100,7 +101,7 @@ static const CGFloat maxScale = 2;
     boardView.layer.borderWidth = 1;
     [self.view addSubview:boardView];
     self.boardView = boardView;
-    boardView.frame = targetRect;
+    boardView.frame = _targetRect;
 }
 
 - (void)P_initSubBttons{
@@ -134,20 +135,20 @@ static const CGFloat maxScale = 2;
     }else if(pinch.state == UIGestureRecognizerStateEnded){
         
         [self P_autoScale];
-      
+        
         [self P_autoTransLationUseRect:self.chosedHeadImageView.frame];
     }
 }
 
 - (void)panHeadImage:(UIPanGestureRecognizer *)pan{
-
+    
     if (pan.state == UIGestureRecognizerStateBegan || pan.state == UIGestureRecognizerStateChanged) {
         
         CGPoint transLationPoint = [pan translationInView:self.view];
         CGFloat newCentX = self.chosedHeadImageView.center.x + transLationPoint.x;
         CGFloat newCentY = self.chosedHeadImageView.center.y + transLationPoint.y;
         self.chosedHeadImageView.center = CGPointMake(newCentX, newCentY);
-
+        
         [pan setTranslation:CGPointZero inView:self.view.superview];
         
     }else if(pan.state == UIGestureRecognizerStateEnded){
@@ -167,9 +168,12 @@ static const CGFloat maxScale = 2;
 - (void)P_clickTrueButton{
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        UIGraphicsBeginImageContextWithOptions(CGSizeMake(viewWeidth, viewWeidth), YES, [UIScreen mainScreen].scale);
+        UIGraphicsBeginImageContextWithOptions(_targetRect.size, YES, [UIScreen mainScreen].scale);
         // 这时候的imagerect要相对这个上下文了
-        CGRect imageRect = CGRectMake(self.chosedHeadImageView.frame.origin.x, self.chosedHeadImageView.frame.origin.y - (viewHeight-viewWeidth)/2, self.chosedHeadImageView.frame.size.width, self.chosedHeadImageView.frame.size.height);
+        CGRect imageRect = CGRectMake(self.chosedHeadImageView.frame.origin.x,
+                                      self.chosedHeadImageView.frame.origin.y - _targetRect.origin.y,
+                                      self.chosedHeadImageView.frame.size.width,
+                                      self.chosedHeadImageView.frame.size.height);
         
         [self.chosedHeadImageView.image drawInRect:imageRect];
         UIImage * tempImage = UIGraphicsGetImageFromCurrentImageContext();
@@ -203,7 +207,7 @@ static const CGFloat maxScale = 2;
     if (CGRectGetMaxX(choseHeadRect) <= boardRect.size.width) {
         choseHeadRect.origin.x  = boardRect.size.width - choseHeadRect.size.width;
     }
-
+    
     // 垂直方向
     if (choseHeadRect.origin.y > boardRect.origin.y) {
         choseHeadRect.origin.y = boardRect.origin.y;
@@ -212,9 +216,9 @@ static const CGFloat maxScale = 2;
         choseHeadRect.origin.y = boardRect.origin.y + boardRect.size.height - choseHeadRect.size.height;
     }
     
-   
+    
     if (choseHeadRect.size.width < boardRect.size.width || choseHeadRect.size.height < boardRect.size.height) {// 特殊情况
-       
+        
         [UIView animateWithDuration:animationTime animations:^{
             self.chosedHeadImageView.center = self.boardView.center;
         }];
